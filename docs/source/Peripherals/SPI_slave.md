@@ -6,7 +6,9 @@ The SPI slave peripheral offers external devices read and write access to the me
 
 the Serial Peripheral Interface (SPI) allows to connect a master device to one or more slave devices. They all share a group of three wires, namely Master-Input,Slave-Output (MISO), Master-Output-Slave-Input (MOSI), and SPI-clock (SCK). The master device will control the communication through the wires by sending commands to the slaves through the MOSI and providing a clock signal (SCK) for them to answer. Slaves need to adjust to the timing imposed by the master: the start and end of commands and packets is given by the count of cycles of SCK. To allow for more than one slave, an extra wire per slave called Chip Select (CS) is needed for the master to inform which slave should listen/answer.  
 
-> ⚠️ The SPI slave peripheral cannot be commanded from software. It is purely an interface to the outside world. It will only receive instructions from the one master interface that connects to it.  
+```{warning}
+The SPI slave peripheral cannot be commanded from software. It is purely an interface to the outside world. It will only receive instructions from the one master interface that connects to it.  
+```
 
 This documentation corresponds to the SPI slave IP of X-HEEP. For the SPI master IP please refer to [the SPI documentation](./SPI.md). 
 
@@ -36,7 +38,9 @@ This amount is stored in the `REG_0` of the SPI slave IP and is set by seding a 
 |----------|----------|
 | `DUMMY_CYCLES` | `0x11` |
 
-> ❗If this command is not sent, the default value is used: 32 cycles. 
+```{info}
+If this command is not sent, the default value is used: 32 cycles. 
+```
 
 ### Directionality
 
