@@ -11,6 +11,7 @@
  * 2 EPFL programmers with two jumpers each
  * 5 female-female dupont cables (>10cm)
  * 4 female-male dupont cables (>10cm)
+ * 1 male-make dupont cable (>10cm)
  * 3 USB-A to micro USB cables (or two power sources and one USB)
 
  Setup:
@@ -33,6 +34,7 @@
  3.a) On the top three lines of pins of the diagram below there are the SPI slave pins. Connect the ones from one board 
       to the master ones of the other board. The pins stand for:
       Syncronization (Sy), SPI clock (Ck), Chip select (Cs), Master-out-Slave-in (Mo), Master-in-Slave-out (Mi).
+ 3.b) Connect the ground of both boards
  4) Have fun
  4.a) Reset both boards. 
  4.b) The one that resets first (master) will light a red LED and start requesting a read from the slave (toggling a green LED). 
