@@ -26,6 +26,8 @@
 #include "hart.h"
 #include "timer_sdk.h"
 
+#include "fast_intr_ctrl.h"
+
 #define PRINTF_IN_SIM 0
 #define PRINTF_IN_FPGA 1
 
@@ -77,16 +79,17 @@ dma_trans_t trans;
 
 int32_t window_intr_flag;
 
-void dma_intr_handler_window_done(uint8_t channel) {
+
+void dma_intr_handler_window_done(uint8_t channel){
     window_intr_flag ++;
 }
+
 
 // The DMA transaction validation checks that the window is not too small. If it 
 // is too small it will assume you are not going to be able to attend the interrupt
 // before the next interrupt. Because our interrupts will be very sparse, we override
 // this check.
-uint8_t dma_window_ratio_warning_threshold()
-{
+uint8_t dma_window_ratio_warning_threshold(){
     return 0;
 }
 
@@ -113,7 +116,8 @@ int main() {
     uint32_t* dlvl_mask               = DLC_START_ADDRESS + DLC_DLVL_MASK_REG_OFFSET;
     uint32_t* dt_mask                 = DLC_START_ADDRESS + DLC_DT_MASK_REG_OFFSET;
     uint32_t* dlc_rnw                 = DLC_START_ADDRESS + DLC_READNOTWRITE_REG_OFFSET;
-    
+    uint32_t* dlc_size                = DLC_START_ADDRESS + DLC_TRANS_SIZE_REG_OFFSET;
+
 /*############################################################
 ####### SET THE DIGITAL LC PARAMETERS ######################*/
 
@@ -132,9 +136,7 @@ int main() {
     *dlvl_mask = (1 << (*dlvl_n_bits)) - 1;
     // dt_mask: mask for the delta-time field (it has as many bits set to 1 as the number of bits for the delta-time field)
     *dt_mask = (1 << (LC_PARAMS_LC_ACQUISITION_WORD_SIZE_OF_TIME)) - 1; 
-    // dlc_rnw: if set to '1' the dLC decrements DMA downcounter each time it reads data from the HW_READ_FIFO
-    //          if set to '0' the dLC decrements DMA downcounter each time it write data to the HW_WRITE_FIFO
-    *dlc_rnw = 0;
+
 
     PRINTF("Set the dLC to: \n\r2sComp:\t%d\n\rLVLw:\t%d bits\n\r",*dlvl_format, *dlvl_log_level_width );
 
@@ -191,30 +193,44 @@ int main() {
     // Set that this will be a 1-Dimensional data transfer
     trans.dim        = DMA_DIM_CONF_1D;
     
-    // Set the size of the transaction. This is the maximum amount of data that should be written.
-    // We will set it to a low value just to monitor the behavior. 
-    // trans.size_d1_du = DATA_LENGTH_B/DMA_DATA_TYPE_2_SIZE(tgt_src.type);
-    trans.size_d1_du = 75;
     
-/*############################################################
-####### CONFIGURE THE WINDOW INTERRUPT ######################*/
-
-
-    plic_Init();
-    plic_irq_set_priority(DMA_WINDOW_INTR, 1);
-    plic_irq_set_enabled(DMA_WINDOW_INTR, kPlicToggleEnabled);
+    /*############################################################
+    ####### CONFIGURE THE WINDOW INTERRUPT ######################*/
     
+    // Prepare the window interrupt
+
     window_intr_flag = 0;
-
-    // Request an interrupt when the DMA reaches a certain amount of transfers
-    trans.win_du = 20;
-    trans.end = DMA_TRANS_END_INTR;
     
+    
+    // The dLC will the one monitoring the end of the transactions
+    // We will set the dlc_rnw to 0 to make the dLC count each written word, and tell the DMA
+    // it has finished its transaction once it has written the specified number of words. 
+    *dlc_size = 80; 
+
+    // Set the size of the transaction. This HAS to be the same value as the dLC will be monitoring.
+    // Whether this refers to read or written words, depends on the dlc_rnw variable.
+    trans.size_d1_du = dlc_size;
+    
+    // dlc_rnw: if set to '1' the dLC decrements DMA downcounter each time it reads data from the HW_READ_FIFO
+    //          if set to '0' the dLC decrements DMA downcounter each time it write data to the HW_WRITE_FIFO
+    *dlc_rnw = 0;
+    
+    // Request an interrupt when the DMA reaches a certain amount of transfers
+    // IMPORTANT: the window interrupt always work with the amount of packets
+    // written, despite whatever the dlc_rnw is.
+    trans.win_du = trans.size_d1_du/4;
+
+    // We do not set an interrupt for the transaction finish, as it would be given by the 
+    // window interrupt anyways. 
+    trans.end = DMA_TRANS_END_INTR;
+
+    // The DMA will restart the same transaction again once it finishes. 
+    // It will finish when the dLC tells it to do so, because it has already written dlc_size packets.
+    trans.mode = DMA_TRANS_MODE_CIRCULAR;
+
     // Specify that we will use the HW FIFO mode: all data read will be forwarded to the 
     // stream peripheral that is connected to the hw fifo. 
-    trans.mode = DMA_TRANS_MODE_HW_FIFO;
-
-    // @ToDo_heepidermis: this is a problem! We should be able to set the DMA as circular
+    trans.hw_fifo_en = true;
 
 /*############################################################
 ####### LOAD THE CONFIGURATION ON THE DMA ###################*/
@@ -290,9 +306,10 @@ int main() {
 
 /*############################################################
 ####### WAIT FOR THE DMA TO FINISH ########################*/
-    while(!dma_is_ready(0)) {       
+
+    while( window_intr_flag < 10 ) {       
         CSR_CLEAR_BITS(CSR_REG_MSTATUS, 0x8);
-        if ( dma_is_ready(0) == 0 ) {
+        if ( window_intr_flag < 10  ) {
                 wait_for_interrupt();
             }
             CSR_SET_BITS(CSR_REG_MSTATUS, 0x8);
