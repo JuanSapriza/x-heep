@@ -75,6 +75,20 @@ dma_target_t tgt_src;
 dma_target_t tgt_dst;
 dma_trans_t trans;
 
+int32_t window_intr_flag;
+
+void dma_intr_handler_window_done(uint8_t channel) {
+    window_intr_flag ++;
+}
+
+// The DMA transaction validation checks that the window is not too small. If it 
+// is too small it will assume you are not going to be able to attend the interrupt
+// before the next interrupt. Because our interrupts will be very sparse, we override
+// this check.
+uint8_t dma_window_ratio_warning_threshold()
+{
+    return 0;
+}
 
 void __attribute__((aligned(4), interrupt)) handler_irq_timer(void) {
     timer_arm_stop();
@@ -120,7 +134,7 @@ int main() {
     *dt_mask = (1 << (LC_PARAMS_LC_ACQUISITION_WORD_SIZE_OF_TIME)) - 1; 
     // dlc_rnw: if set to '1' the dLC decrements DMA downcounter each time it reads data from the HW_READ_FIFO
     //          if set to '0' the dLC decrements DMA downcounter each time it write data to the HW_WRITE_FIFO
-    *dlc_rnw = 1;
+    *dlc_rnw = 0;
 
     PRINTF("Set the dLC to: \n\r2sComp:\t%d\n\rLVLw:\t%d bits\n\r",*dlvl_format, *dlvl_log_level_width );
 
@@ -174,19 +188,36 @@ int main() {
     // Set the transaction
     trans.src        = &tgt_src;
     trans.dst        = &tgt_dst;
-    // Specify that we will use the HW FIFO mode: all data read will be forwarded to the 
-    // stream peripheral that is connected to the hw fifo. 
-    trans.mode       = DMA_TRANS_MODE_HW_FIFO;
     // Set that this will be a 1-Dimensional data transfer
     trans.dim        = DMA_DIM_CONF_1D;
     
     // Set the size of the transaction. This is the maximum amount of data that should be written.
     // We will set it to a low value just to monitor the behavior. 
-    trans.size_d1_du = DATA_LENGTH_B/DMA_DATA_TYPE_2_SIZE(tgt_src.type);
+    // trans.size_d1_du = DATA_LENGTH_B/DMA_DATA_TYPE_2_SIZE(tgt_src.type);
+    trans.size_d1_du = 75;
     
-    // Specify that we will have the CPU checking the status of the DMA constantly 
-    trans.end        = DMA_TRANS_END_INTR;
-    //@ToDo: Set this as a circular transfer with double buffering.  
+/*############################################################
+####### CONFIGURE THE WINDOW INTERRUPT ######################*/
+
+
+    plic_Init();
+    plic_irq_set_priority(DMA_WINDOW_INTR, 1);
+    plic_irq_set_enabled(DMA_WINDOW_INTR, kPlicToggleEnabled);
+    
+    window_intr_flag = 0;
+
+    // Request an interrupt when the DMA reaches a certain amount of transfers
+    trans.win_du = 20;
+    trans.end = DMA_TRANS_END_INTR;
+    
+    // Specify that we will use the HW FIFO mode: all data read will be forwarded to the 
+    // stream peripheral that is connected to the hw fifo. 
+    trans.mode = DMA_TRANS_MODE_HW_FIFO;
+
+    // @ToDo_heepidermis: this is a problem! We should be able to set the DMA as circular
+
+/*############################################################
+####### LOAD THE CONFIGURATION ON THE DMA ###################*/
 
     // Init the DMA (NULL because we will use the internal dma #0)
     dma_init(NULL);
@@ -215,9 +246,7 @@ int main() {
         PRINTF("Error: dma_launch\n");
         return EXIT_FAILURE;
     }
-
-    // PRINTF("Launched DMA\n\r");
-
+    PRINTF("Launched DMA\n\r");
 
     #if !TARGET_SIM
     // Enable the timer interrupts to go to sleep between packets. 
@@ -225,8 +254,6 @@ int main() {
     // Wait for a while just for the lols
     timer_wait_us(1000000);
     #endif
-
-    
 
 /*############################################################
 ####### CONFIGURE THE SPI TRANSFER ##########################*/
@@ -272,7 +299,7 @@ int main() {
     }
         
     // Celebrate in a fairly lame way
-    PRINTF("DMA done!\n\r");
+    PRINTF("DMA done! Did %d windows\n\r", window_intr_flag);
     gpio_write(GPIO_LD5_G,  false);
     gpio_write(GPIO_LD5_B,  true);    
 
