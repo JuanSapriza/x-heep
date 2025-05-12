@@ -1,0 +1,187 @@
+[*]
+[*] GTKWave Analyzer v3.3.104 (w)1999-2020 BSI
+[*] Mon May 12 08:12:34 2025
+[*]
+[dumpfile] "/home/juan/Desktop/ESL/0_x-heep/build/openhwgroup.org_systems_core-v-mini-mcu_0/sim-verilator/waveform.vcd"
+[dumpfile_mtime] "Mon May 12 08:05:41 2025"
+[dumpfile_size] 2166631
+[savefile] "/home/juan/Desktop/ESL/0_x-heep/waves.gtkw"
+[timestart] 24845200
+[size] 1920 1163
+[pos] 757 -1283
+*-16.069611 25005000 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
+[treeopen] TOP.
+[treeopen] TOP.testharness.
+[treeopen] TOP.testharness.x_heep_system_i.
+[treeopen] TOP.testharness.x_heep_system_i.core_v_mini_mcu_i.
+[treeopen] TOP.testharness.x_heep_system_i.core_v_mini_mcu_i.ao_peripheral_subsystem_i.dma_subsystem_i.dma_i_gen[0].
+[treeopen] TOP.testharness.x_heep_system_i.core_v_mini_mcu_i.cpu_subsystem_i.gen_cv32e20.
+[treeopen] TOP.testharness.x_heep_system_i.core_v_mini_mcu_i.cpu_subsystem_i.gen_cv32e20.cv32e20_i.
+[treeopen] TOP.testharness.x_heep_system_i.core_v_mini_mcu_i.debug_subsystem_i.gen_spi_slave.obi_spi_slave_i.
+[treeopen] TOP.testharness.x_heep_system_i.core_v_mini_mcu_i.peripheral_subsystem_i.
+[treeopen] TOP.testharness.x_heep_system_i.core_v_mini_mcu_i.peripheral_subsystem_i.spi_host_dma_i.
+[sst_width] 251
+[signals_width] 305
+[sst_expanded] 1
+[sst_vpaned_height] 456
+@28
+TOP.clk_i
+@200
+-GPIO
+@28
+(18)TOP.testharness.gpio[31:0]
+(19)TOP.testharness.gpio[31:0]
+(20)TOP.testharness.gpio[31:0]
+@200
+-UART
+@28
+TOP.testharness.uart_tx
+@200
+-SPI slave
+@22
+TOP.testharness.x_heep_system_i.core_v_mini_mcu_i.debug_subsystem_i.gen_spi_slave.obi_spi_slave_i.tx_data[31:0]
+@28
+TOP.testharness.x_heep_system_i.core_v_mini_mcu_i.debug_subsystem_i.gen_spi_slave.obi_spi_slave_i.spi_miso_o
+TOP.testharness.x_heep_system_i.core_v_mini_mcu_i.debug_subsystem_i.gen_spi_slave.obi_spi_slave_i.tx_done
+TOP.testharness.x_heep_system_i.core_v_mini_mcu_i.debug_subsystem_i.gen_spi_slave.obi_spi_slave_i.tx_data_valid
+@200
+-SPI host
+@28
+(1)TOP.testharness.spi_csb[1:0]
+TOP.testharness.spi_sck
+(3)TOP.testharness.spi_sd_io[3:0]
+(2)TOP.testharness.spi_sd_io[3:0]
+TOP.testharness.x_heep_system_i.core_v_mini_mcu_i.peripheral_subsystem_i.spi_host_dma_i.rx_valid_o
+TOP.testharness.x_heep_system_i.core_v_mini_mcu_i.peripheral_subsystem_i.spi_host_dma_i.rx_empty
+@c00022
+TOP.testharness.x_heep_system_i.core_v_mini_mcu_i.peripheral_subsystem_i.spi_host_dma_i.rx_watermark[7:0]
+@28
+(0)TOP.testharness.x_heep_system_i.core_v_mini_mcu_i.peripheral_subsystem_i.spi_host_dma_i.rx_watermark[7:0]
+(1)TOP.testharness.x_heep_system_i.core_v_mini_mcu_i.peripheral_subsystem_i.spi_host_dma_i.rx_watermark[7:0]
+(2)TOP.testharness.x_heep_system_i.core_v_mini_mcu_i.peripheral_subsystem_i.spi_host_dma_i.rx_watermark[7:0]
+(3)TOP.testharness.x_heep_system_i.core_v_mini_mcu_i.peripheral_subsystem_i.spi_host_dma_i.rx_watermark[7:0]
+(4)TOP.testharness.x_heep_system_i.core_v_mini_mcu_i.peripheral_subsystem_i.spi_host_dma_i.rx_watermark[7:0]
+(5)TOP.testharness.x_heep_system_i.core_v_mini_mcu_i.peripheral_subsystem_i.spi_host_dma_i.rx_watermark[7:0]
+(6)TOP.testharness.x_heep_system_i.core_v_mini_mcu_i.peripheral_subsystem_i.spi_host_dma_i.rx_watermark[7:0]
+(7)TOP.testharness.x_heep_system_i.core_v_mini_mcu_i.peripheral_subsystem_i.spi_host_dma_i.rx_watermark[7:0]
+@1401200
+-group_end
+@28
+TOP.testharness.x_heep_system_i.core_v_mini_mcu_i.peripheral_subsystem_i.spi_host_dma_i.rx_wm
+@200
+-DMA in
+@28
+(6)TOP.testharness.x_heep_system_i.core_v_mini_mcu_i.ao_peripheral_subsystem_i.dma_subsystem_i.dma_i_gen[0].dma_i.trigger_slot_i[6:0]
+@22
+[color] 3
+TOP.testharness.x_heep_system_i.core_v_mini_mcu_i.ao_peripheral_subsystem_i.dma_subsystem_i.dma_i_gen[0].dma_i.data_in_addr[31:0]
+[color] 1
+TOP.testharness.x_heep_system_i.core_v_mini_mcu_i.ao_peripheral_subsystem_i.dma_subsystem_i.dma_i_gen[0].dma_i.data_in_rdata[31:0]
+@28
+[color] 7
+TOP.testharness.x_heep_system_i.core_v_mini_mcu_i.ao_peripheral_subsystem_i.dma_subsystem_i.dma_i_gen[0].dma_i.data_in_rvalid
+@22
+TOP.testharness.x_heep_system_i.core_v_mini_mcu_i.ao_peripheral_subsystem_i.dma_subsystem_i.dma_i_gen[0].dma_i.data_in_be[3:0]
+@200
+-DMA HW fifo
+@22
+TOP.testharness.x_heep_system_i.core_v_mini_mcu_i.ao_peripheral_subsystem_i.dma_subsystem_i.dma_i_gen[0].dma_i.hw_r_fifo_ctrl_i.data_i[31:0]
+@28
+[color] 7
+TOP.testharness.x_heep_system_i.core_v_mini_mcu_i.ao_peripheral_subsystem_i.dma_subsystem_i.dma_i_gen[0].dma_i.hw_r_fifo_ctrl_i.push_o
+@23
+[color] 1
+TOP.testharness.x_heep_system_i.core_v_mini_mcu_i.ao_peripheral_subsystem_i.dma_subsystem_i.dma_i_gen[0].dma_i.hw_r_fifo_ctrl_i.data_o[31:0]
+@22
+TOP.testharness.x_heep_system_i.core_v_mini_mcu_i.ao_peripheral_subsystem_i.dma_subsystem_i.dma_i_gen[0].dma_i.hw_fifo_resp_i.data[31:0]
+TOP.testharness.x_heep_system_i.core_v_mini_mcu_i.ao_peripheral_subsystem_i.dma_subsystem_i.dma_i_gen[0].dma_i.hw_w_fifo_ctrl_i.data_i[31:0]
+TOP.testharness.x_heep_system_i.core_v_mini_mcu_i.ao_peripheral_subsystem_i.dma_subsystem_i.dma_i_gen[0].dma_i.hw_w_fifo_ctrl_i.data_o[31:0]
+@28
+TOP.testharness.x_heep_system_i.core_v_mini_mcu_i.ao_peripheral_subsystem_i.dma_subsystem_i.dma_i_gen[0].dma_i.hw_w_fifo_ctrl_i.pop_o
+TOP.testharness.x_heep_system_i.core_v_mini_mcu_i.ao_peripheral_subsystem_i.dma_subsystem_i.dma_i_gen[0].dma_i.hw_fifo_resp_i.push
+TOP.testharness.x_heep_system_i.core_v_mini_mcu_i.ao_peripheral_subsystem_i.dma_subsystem_i.dma_i_gen[0].dma_i.hw_fifo_resp_i.empty
+TOP.testharness.x_heep_system_i.core_v_mini_mcu_i.ao_peripheral_subsystem_i.dma_subsystem_i.dma_i_gen[0].dma_i.hw_r_fifo_push_padding
+@22
+TOP.testharness.x_heep_system_i.core_v_mini_mcu_i.ao_peripheral_subsystem_i.dma_subsystem_i.dma_i_gen[0].dma_i.hw_w_fifo_data[31:0]
+@200
+-dLC
+@22
+[color] 1
+TOP.testharness.x_heep_system_i.core_v_mini_mcu_i.peripheral_subsystem_i.dlc_i.hw_r_fifo_data_out[15:0]
+@28
+[color] 7
+TOP.testharness.x_heep_system_i.core_v_mini_mcu_i.peripheral_subsystem_i.dlc_i.hw_r_fifo_pop
+@22
+TOP.testharness.x_heep_system_i.core_v_mini_mcu_i.peripheral_subsystem_i.dlc_i.curr_lvl[15:0]
+TOP.testharness.x_heep_system_i.core_v_mini_mcu_i.peripheral_subsystem_i.dlc_i.din_lvl[15:0]
+@28
+TOP.testharness.x_heep_system_i.core_v_mini_mcu_i.peripheral_subsystem_i.dlc_i.dir
+TOP.testharness.x_heep_system_i.core_v_mini_mcu_i.peripheral_subsystem_i.dlc_i.dir_out
+@22
+TOP.testharness.x_heep_system_i.core_v_mini_mcu_i.peripheral_subsystem_i.dlc_i.dlc_output[16:0]
+@100000028
+TOP.testharness.x_heep_system_i.core_v_mini_mcu_i.peripheral_subsystem_i.dlc_i.dlc_state[1:0]
+TOP.testharness.x_heep_system_i.core_v_mini_mcu_i.peripheral_subsystem_i.dlc_i.dlc_state_n[1:0]
+@28
+TOP.testharness.x_heep_system_i.core_v_mini_mcu_i.peripheral_subsystem_i.dlc_i.dlc_xing_intr_o
+@22
+TOP.testharness.x_heep_system_i.core_v_mini_mcu_i.peripheral_subsystem_i.dlc_i.sdiff_cnt[15:0]
+TOP.testharness.x_heep_system_i.core_v_mini_mcu_i.peripheral_subsystem_i.dlc_i.dlvl_out[15:0]
+TOP.testharness.x_heep_system_i.core_v_mini_mcu_i.peripheral_subsystem_i.dlc_i.dt_dir_out[16:0]
+[color] 1
+TOP.testharness.x_heep_system_i.core_v_mini_mcu_i.peripheral_subsystem_i.dlc_i.hw_w_fifo_data_in[15:0]
+@28
+[color] 7
+TOP.testharness.x_heep_system_i.core_v_mini_mcu_i.peripheral_subsystem_i.dlc_i.hw_w_fifo_push
+TOP.testharness.x_heep_system_i.core_v_mini_mcu_i.peripheral_subsystem_i.dlc_i.reg_bypass
+@200
+-DMA out
+@28
+TOP.testharness.x_heep_system_i.core_v_mini_mcu_i.ao_peripheral_subsystem_i.dma_subsystem_i.dma_i_gen[0].dma_i.fifo_flush
+@22
+TOP.testharness.x_heep_system_i.core_v_mini_mcu_i.ao_peripheral_subsystem_i.dma_subsystem_i.dma_i_gen[0].dma_i.write_fifo_input[31:0]
+TOP.testharness.x_heep_system_i.core_v_mini_mcu_i.ao_peripheral_subsystem_i.dma_subsystem_i.dma_i_gen[0].dma_i.write_fifo_output[31:0]
+@28
+TOP.testharness.x_heep_system_i.core_v_mini_mcu_i.ao_peripheral_subsystem_i.dma_subsystem_i.dma_i_gen[0].dma_i.write_fifo_usage[1:0]
+@22
+TOP.testharness.x_heep_system_i.core_v_mini_mcu_i.ao_peripheral_subsystem_i.dma_subsystem_i.dma_i_gen[0].dma_i.window_counter[31:0]
+[color] 3
+TOP.testharness.x_heep_system_i.core_v_mini_mcu_i.ao_peripheral_subsystem_i.dma_subsystem_i.dma_i_gen[0].dma_i.data_out_addr[31:0]
+[color] 1
+TOP.testharness.x_heep_system_i.core_v_mini_mcu_i.ao_peripheral_subsystem_i.dma_subsystem_i.dma_i_gen[0].dma_i.data_out_wdata[31:0]
+@28
+[color] 7
+TOP.testharness.x_heep_system_i.core_v_mini_mcu_i.ao_peripheral_subsystem_i.dma_subsystem_i.dma_i_gen[0].dma_i.data_out_rvalid
+@22
+TOP.testharness.x_heep_system_i.core_v_mini_mcu_i.ao_peripheral_subsystem_i.dma_subsystem_i.dma_i_gen[0].dma_i.data_out_be[3:0]
+@200
+-CPU
+@22
+TOP.testharness.x_heep_system_i.core_v_mini_mcu_i.cpu_subsystem_i.gen_cv32e20.cv32e20_i.instr_rdata_i[31:0]
+TOP.testharness.x_heep_system_i.core_v_mini_mcu_i.cpu_subsystem_i.gen_cv32e20.cv32e20_i.instr_addr_o[31:0]
+@28
+TOP.testharness.x_heep_system_i.core_v_mini_mcu_i.cpu_subsystem_i.gen_cv32e20.cv32e20_i.instr_gnt_i
+TOP.testharness.x_heep_system_i.core_v_mini_mcu_i.cpu_subsystem_i.gen_cv32e20.cv32e20_i.instr_req_o
+TOP.testharness.x_heep_system_i.core_v_mini_mcu_i.cpu_subsystem_i.gen_cv32e20.cv32e20_i.instr_rvalid_i
+@22
+TOP.testharness.x_heep_system_i.core_v_mini_mcu_i.cpu_subsystem_i.gen_cv32e20.cv32e20_i.irq_fast_i[15:0]
+@200
+-RAM1
+@22
+TOP.testharness.x_heep_system_i.core_v_mini_mcu_i.memory_subsystem_i.ram1_i.addr_i[12:0]
+TOP.testharness.x_heep_system_i.core_v_mini_mcu_i.memory_subsystem_i.ram1_i.be_i[3:0]
+TOP.testharness.x_heep_system_i.core_v_mini_mcu_i.memory_subsystem_i.ram1_i.rdata_o[31:0]
+TOP.testharness.x_heep_system_i.core_v_mini_mcu_i.memory_subsystem_i.ram1_i.wdata_i[31:0]
+@28
+TOP.testharness.x_heep_system_i.core_v_mini_mcu_i.memory_subsystem_i.ram1_i.we_i
+@200
+-RAM2
+@22
+TOP.testharness.x_heep_system_i.core_v_mini_mcu_i.memory_subsystem_i.ram2_i.addr_i[12:0]
+TOP.testharness.x_heep_system_i.core_v_mini_mcu_i.memory_subsystem_i.ram2_i.be_i[3:0]
+TOP.testharness.x_heep_system_i.core_v_mini_mcu_i.memory_subsystem_i.ram2_i.rdata_o[31:0]
+TOP.testharness.x_heep_system_i.core_v_mini_mcu_i.memory_subsystem_i.ram2_i.wdata_i[31:0]
+@28
+TOP.testharness.x_heep_system_i.core_v_mini_mcu_i.memory_subsystem_i.ram2_i.we_i
+[pattern_trace] 1
+[pattern_trace] 0

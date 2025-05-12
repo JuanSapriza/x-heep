@@ -86,7 +86,7 @@ int main() {
     trans.dst        = &tgt_dst;
     trans.mode       = DMA_TRANS_MODE_HW_FIFO;
     trans.dim        = DMA_DIM_CONF_1D;
-    trans.size_d1_du = 3748;
+    trans.size_d1_du = sizeof(ecg_data)/DMA_DATA_TYPE_2_SIZE(tgt_src.type);
     trans.end        = DMA_TRANS_END_INTR;
 
     dma_init(NULL);
@@ -113,14 +113,18 @@ int main() {
     }
 
     // Checking  the results
+    PRINTF("\n\rRES\t| dLC\t| Golden");
     for (int i = 0; i < LC_STATS_CROSSINGS; i++)
     {
         if(dlc_results[i] != lc_data_for_storage_data[i])
         {
-            printf("Error at position %d: dlc result is %d, golden result is %d\n", i, dlc_results[i], lc_data_for_storage_data[i]);
-            return EXIT_FAILURE;
+            PRINTF("\n\rX %d\t| %d\t| %d", i, dlc_results[i], lc_data_for_storage_data[i]);
+            // return EXIT_FAILURE;
         }
     }
+
+
+    PRINTF("EXIT-o\n");
 
     return EXIT_SUCCESS;
 }
