@@ -311,11 +311,11 @@ module core_v_mini_mcu
     output obi_req_t [core_v_mini_mcu_pkg::DMA_NUM_MASTER_PORTS-1:0] ext_dma_addr_req_o,
     input obi_resp_t [core_v_mini_mcu_pkg::DMA_NUM_MASTER_PORTS-1:0] ext_dma_addr_resp_i,
 
-    output fifo_req_t  [core_v_mini_mcu_pkg::DMA_CH_NUM-1:0] hw_fifo_req_o,
-    input  fifo_resp_t [core_v_mini_mcu_pkg::DMA_CH_NUM-1:0] hw_fifo_resp_i,
+    //output fifo_req_t [core_v_mini_mcu_pkg::DMA_CH_NUM-1:0] hw_fifo_req_o,
+    //input fifo_resp_t [core_v_mini_mcu_pkg::DMA_CH_NUM-1:0] hw_fifo_resp_i,
 
     input logic [core_v_mini_mcu_pkg::DMA_CH_NUM-1:0] ext_dma_stop_i,
-    input logic [core_v_mini_mcu_pkg::DMA_CH_NUM-1:0] hw_fifo_done_i,
+    //input logic [core_v_mini_mcu_pkg::DMA_CH_NUM-1:0] hw_fifo_done_i,
 
     output reg_req_t ext_peripheral_slave_req_o,
     input  reg_rsp_t ext_peripheral_slave_resp_i,
@@ -365,6 +365,14 @@ module core_v_mini_mcu
     $display("[X-HEEP]: NUM_BYTES = %dKB", NUM_BYTES / 1024);
   end
 `endif
+
+
+
+  hw_fifo_pkg::hw_fifo_req_t [core_v_mini_mcu_pkg::DMA_CH_NUM-1:0] hw_fifo_req_o;
+  hw_fifo_pkg::hw_fifo_resp_t [core_v_mini_mcu_pkg::DMA_CH_NUM-1:0] hw_fifo_resp_i;
+
+  logic hw_fifo_done;
+
 
   // masters signals
   obi_req_t core_instr_req;
@@ -711,7 +719,7 @@ module core_v_mini_mcu
       .ext_dma_slot_tx_i,
       .ext_dma_slot_rx_i,
       .ext_dma_stop_i,
-      .hw_fifo_done_i,
+      .hw_fifo_done_i(hw_fifo_done),
       .dma_done_o
   );
 
@@ -773,7 +781,10 @@ module core_v_mini_mcu
       .i2s_sd_o(i2s_sd_o),
       .i2s_sd_oe_o(i2s_sd_oe_o),
       .i2s_sd_i(i2s_sd_i),
-      .i2s_rx_valid_o(i2s_rx_valid)
+      .i2s_rx_valid_o(i2s_rx_valid),
+      .hw_fifo_req_i(hw_fifo_req_o),
+      .hw_fifo_resp_o(hw_fifo_resp_i),
+      .hw_fifo_done_o(hw_fifo_done)
   );
 
   // Debug_req assign

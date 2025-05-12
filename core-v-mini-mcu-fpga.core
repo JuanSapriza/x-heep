@@ -11,6 +11,7 @@ filesets:
   rtl-fpga:
     depend:
     - x-heep::packages
+    - example:ip:dlc
     files:
     - hw/fpga/sram_wrapper.sv
     file_type: systemVerilogSource
