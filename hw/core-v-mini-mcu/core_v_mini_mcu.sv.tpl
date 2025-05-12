@@ -116,10 +116,11 @@ ${pad.core_v_mini_mcu_interface}
 
 
 
-hw_fifo_pkg::hw_fifo_req_t [core_v_mini_mcu_pkg::DMA_CH_NUM-1:0] hw_fifo_req_o;
-hw_fifo_pkg::hw_fifo_resp_t [core_v_mini_mcu_pkg::DMA_CH_NUM-1:0] hw_fifo_resp_i;
+fifo_pkg::fifo_req_t [core_v_mini_mcu_pkg::DMA_CH_NUM-1:0] hw_fifo_req_o;
+fifo_pkg::fifo_req_t [core_v_mini_mcu_pkg::DMA_CH_NUM-1:0] hw_fifo_resp_i;
 
-logic hw_fifo_done;
+logic [core_v_mini_mcu_pkg::DMA_CH_NUM-1:0] hw_fifo_done;
+assign hw_fifo_done[core_v_mini_mcu_pkg::DMA_CH_NUM-1:1] = '0;
 
 
   // masters signals
@@ -526,7 +527,7 @@ logic hw_fifo_done;
       .i2s_rx_valid_o(i2s_rx_valid),
       .hw_fifo_req_i(hw_fifo_req_o),
       .hw_fifo_resp_o(hw_fifo_resp_i),
-      .hw_fifo_done_o(hw_fifo_done)
+      .hw_fifo_done_o(hw_fifo_done[0])
   );
 
   // Debug_req assign

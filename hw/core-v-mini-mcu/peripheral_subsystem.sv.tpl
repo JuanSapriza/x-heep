@@ -93,8 +93,9 @@ module peripheral_subsystem
     input  logic pdm2pcm_pdm_i,
 
     // DLC DMA connection fifo
-    input   hw_fifo_pkg::hw_fifo_req_t  [core_v_mini_mcu_pkg::DMA_CH_NUM-1:0] hw_fifo_req_i,
-    output  hw_fifo_pkg::hw_fifo_resp_t [core_v_mini_mcu_pkg::DMA_CH_NUM-1:0] hw_fifo_resp_o
+    input   fifo_pkg::fifo_req_t  [core_v_mini_mcu_pkg::DMA_CH_NUM-1:0] hw_fifo_req_i,
+    output  fifo_pkg::fifo_req_t [core_v_mini_mcu_pkg::DMA_CH_NUM-1:0] hw_fifo_resp_o,
+    output logic hw_fifo_done_o
 
 );
 
@@ -179,6 +180,8 @@ module peripheral_subsystem
   assign intr_vector[${interrupts["spi2_intr_event"]}] = spi2_intr_event;
   assign intr_vector[${interrupts["i2s_intr_event"]}] = i2s_intr_event;
   assign intr_vector[${interrupts["dma_window_intr"]}]  = dma_window_intr_i;
+
+  assign hw_fifo_resp_o[core_v_mini_mcu_pkg::DMA_CH_NUM-1:1] = '0;
 
   // External interrupts assignement
   for (genvar i = 0; i < NEXT_INT; i++) begin
@@ -578,13 +581,14 @@ module peripheral_subsystem
 % if 'dlci' in peripherals and peripherals['dlci']['is_included'] == 'yes':
   
       dlc dlc_i (
-          .clk_i,
-          .rst_ni,
+          .clk_i(clk_i),
+          .rst_ni(rst_ni),
           .dlc_xing_intr_o(),
+          .dlc_done_o(hw_fifo_done_o),
           .reg_req_i(peripheral_slv_req[core_v_mini_mcu_pkg::DLCI_IDX]),
           .reg_rsp_o(peripheral_slv_rsp[core_v_mini_mcu_pkg::DLCI_IDX]),
-          .hw_fifo_req_i,
-          .hw_fifo_resp_o
+          .hw_fifo_req_i(hw_fifo_req_i[0]),
+          .hw_fifo_resp_o(hw_fifo_resp_o[0])
       );
   % else:
   assign peripheral_slv_rsp[core_v_mini_mcu_pkg::DLCI_IDX] = '0;
