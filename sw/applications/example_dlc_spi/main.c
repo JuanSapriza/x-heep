@@ -58,7 +58,7 @@
 #define FULL_ECG 1
 
 #if FULL_ECG
-    #define DATA_LENGTH_B   sizeof(SOURCE_DATA) 
+    #define DATA_LENGTH_B   sizeof(SOURCE_DATA)
 #else
     #define DATA_LENGTH_B   256
 #endif
@@ -68,6 +68,7 @@
 #define CHUNKS_NW       (DATA_LENGTH_B/(DATA_CHUNK_W*4)) + ((DATA_LENGTH_B%(DATA_CHUNK_W*4))!=0)
 #define CHUNKS_NB       (DATA_LENGTH_B/DATA_CHUNK_B)
 
+#define DMA_CSR_REG_MIE_MASK (( 1 << 30 ) |( 1 << 19 ) | (1 << 11 ))
 
 #define SOURCE_DATA ecg_data
 spi_host_t* spi_device = spi_host1;
@@ -77,15 +78,20 @@ dma_target_t tgt_src;
 dma_target_t tgt_dst;
 dma_trans_t trans;
 
-int32_t window_intr_flag;
+int32_t window_intr_flag = 0;
+int32_t transactions_intr_flag = 0;
 
 
 void dma_intr_handler_window_done(uint8_t channel){
     window_intr_flag ++;
 }
 
+void dma_intr_handler_trans_done(uint8_t channel){
+    transactions_intr_flag ++;
+}
 
-// The DMA transaction validation checks that the window is not too small. If it 
+
+// The DMA transaction validation checks that the window is not too small. If it
 // is too small it will assume you are not going to be able to attend the interrupt
 // before the next interrupt. Because our interrupts will be very sparse, we override
 // this check.
@@ -96,16 +102,16 @@ uint8_t dma_window_ratio_warning_threshold(){
 void __attribute__((aligned(4), interrupt)) handler_irq_timer(void) {
     timer_arm_stop();
     timer_irq_clear();
-    return;   
+    return;
 }
 
 int main() {
     CSR_SET_BITS(CSR_REG_MSTATUS, 0x8);
-    CSR_SET_BITS(CSR_REG_MIE, (1 << 11) | (1 << 19));
+    CSR_SET_BITS(CSR_REG_MIE, DMA_CSR_REG_MIE_MASK );
 
     // dLC results buffer
     int16_t dlc_results[500];
-  
+
 /*############################################################
 ####### SET THE DIGITAL LC POINTERS #######################*/
 
@@ -129,13 +135,13 @@ int main() {
     *dlvl_log_level_width = LC_PARAMS_LC_LEVEL_WIDTH_BY_BITS;
     // dlvl_n_bits: number of bits for the delta-levels field
     //              if dlvl_format is set to '1' the number of bits for the delta-levels is dlvl_n_bits
-    //              if dlvl_format is set to '0' the number of bits for the delta-levels is dlvl_n_bits - 1 to account for the sign bit 
+    //              if dlvl_format is set to '0' the number of bits for the delta-levels is dlvl_n_bits - 1 to account for the sign bit
     *dlvl_n_bits = (LC_PARAMS_DATA_IN_TWOS_COMPLEMENT) ? LC_PARAMS_LC_ACQUISITION_WORD_SIZE_OF_AMPLITUDE:
                         LC_PARAMS_LC_ACQUISITION_WORD_SIZE_OF_AMPLITUDE - 1;
     // dlvl_mask: mask for the delta-levels field (it has as many bits set to 1 as the number of bits for the delta-levels field)
     *dlvl_mask = (1 << (*dlvl_n_bits)) - 1;
     // dt_mask: mask for the delta-time field (it has as many bits set to 1 as the number of bits for the delta-time field)
-    *dt_mask = (1 << (LC_PARAMS_LC_ACQUISITION_WORD_SIZE_OF_TIME)) - 1; 
+    *dt_mask = (1 << (LC_PARAMS_LC_ACQUISITION_WORD_SIZE_OF_TIME)) - 1;
 
 
     PRINTF("Set the dLC to: \n\r2sComp:\t%d\n\rLVLw:\t%d bits\n\r",*dlvl_format, *dlvl_log_level_width );
@@ -146,7 +152,7 @@ int main() {
     uint8_t synq;
 
     // Configure the pynq's internal LEDs to show which is the slave
-    // and which the master.  
+    // and which the master.
     gpio_cfg_t pin_cfg = {
     .pin = GPIO_LD5_R,
     .mode = GpioModeOutPushPull,
@@ -158,7 +164,7 @@ int main() {
     gpio_config(pin_cfg);
 	pin_cfg.pin     = GPIO_LD5_G;
     gpio_config(pin_cfg);
-    // Start all LEDs off. 
+    // Start all LEDs off.
     gpio_write(GPIO_LD5_R, false);
     gpio_write(GPIO_LD5_B, false);
     gpio_write(GPIO_LD5_G, false);
@@ -172,15 +178,15 @@ int main() {
     // Set the source target (where data is taken from) to the Rx fifo of the SPI
     tgt_src.ptr = (uint8_t *) (uint32_t *)((uintptr_t)spi_device + SPI_HOST_RXDATA_REG_OFFSET);
     // Select the appropriate slot (depending on which spi_device is being used)
-    tgt_src.trig = src_slot;   
-    // Because the data is always taken from the same register, there should be no increment 
+    tgt_src.trig = src_slot;
+    // Because the data is always taken from the same register, there should be no increment
     tgt_src.inc_d1_du = 0;
     // We will copy data in chunks of 16-bits, the width of the ECG data used
     tgt_src.type = DMA_DATA_TYPE_WORD;
-    
+
     // After passing through the dLC, the data will be stored in a separate buffer.
     tgt_dst.ptr = (uint8_t *) dlc_results;
-    // These data we will store in different places in memory, so the increment should be 1 data unit (du) 
+    // These data we will store in different places in memory, so the increment should be 1 data unit (du)
     tgt_dst.inc_d1_du = 1;
     // We have nothing to mark the pace for the acquisition, so the slot will be simply the memory grants
     tgt_dst.trig = DMA_TRIG_MEMORY;
@@ -192,44 +198,50 @@ int main() {
     trans.dst        = &tgt_dst;
     // Set that this will be a 1-Dimensional data transfer
     trans.dim        = DMA_DIM_CONF_1D;
-    
-    
+
+
     /*############################################################
     ####### CONFIGURE THE WINDOW INTERRUPT ######################*/
-    
+
     // Prepare the window interrupt
 
     window_intr_flag = 0;
-    
-    
-    // The dLC will the one monitoring the end of the transactions
-    // We will set the dlc_rnw to 0 to make the dLC count each written word, and tell the DMA
-    // it has finished its transaction once it has written the specified number of words. 
-    *dlc_size = 80; 
+    transactions_intr_flag = 0;
 
-    // Set the size of the transaction. This HAS to be the same value as the dLC will be monitoring.
-    // Whether this refers to read or written words, depends on the dlc_rnw variable.
-    trans.size_d1_du = dlc_size;
-    
+    // We will set the dlc_rnw to 1 to make the dLC count each READ word, and tell the DMA
+    // it has finished its transaction once it has READ the specified number of words.
     // dlc_rnw: if set to '1' the dLC decrements DMA downcounter each time it reads data from the HW_READ_FIFO
     //          if set to '0' the dLC decrements DMA downcounter each time it write data to the HW_WRITE_FIFO
-    *dlc_rnw = 0;
-    
+    *dlc_rnw = 1;
+
+    // The dLC will the one monitoring the end of the transactions.
+    // We want to restart the DMA transaction every time the DMA has read the whole buffer, so that it can send it again
+    // Until we have processed enough data
+    // We will split the whole data buffer in 4 so the SPI has enough data to fetch
+    *dlc_size = dlc_rnw ? (DATA_LENGTH_B/DMA_DATA_TYPE_2_SIZE(DMA_DATA_TYPE_WORD)) / 4 : 100;
+
     // Request an interrupt when the DMA reaches a certain amount of transfers
     // IMPORTANT: the window interrupt always work with the amount of packets
     // written, despite whatever the dlc_rnw is.
-    trans.win_du = trans.size_d1_du/4;
+    // How many transfers? Depends on what you want... but make sure that the
+    // CPU will be able to execute all it's code before the next interrupt
+    trans.win_du = 50;
 
-    // We do not set an interrupt for the transaction finish, as it would be given by the 
-    // window interrupt anyways. 
+    // Set the size of the transaction. This HAS to be the same value as the dLC will be monitoring.
+    // Whether this refers to read or written words, depends on the dlc_rnw variable.
+    trans.size_d1_du = *dlc_size;
+
+
+    // We do not set an interrupt for the transaction finish, as it would be given by the
+    // window interrupt anyways.
     trans.end = DMA_TRANS_END_INTR;
 
-    // The DMA will restart the same transaction again once it finishes. 
+    // The DMA will restart the same transaction again once it finishes.
     // It will finish when the dLC tells it to do so, because it has already written dlc_size packets.
     trans.mode = DMA_TRANS_MODE_CIRCULAR;
 
-    // Specify that we will use the HW FIFO mode: all data read will be forwarded to the 
-    // stream peripheral that is connected to the hw fifo. 
+    // Specify that we will use the HW FIFO mode: all data read will be forwarded to the
+    // stream peripheral that is connected to the hw fifo.
     trans.hw_fifo_en = true;
 
 /*############################################################
@@ -251,12 +263,12 @@ int main() {
         PRINTF("Error: dma_load_transaction: %d\n", res);
         return EXIT_FAILURE;
     }
-    
+
     PRINTF("Cofigured DMA\n\r");
 
 /*############################################################
 ####### LAUNCH THE DMA #####################################*/
-    
+
     // Launch the DMA transaction. As the DMA will be waiting at the SPI slot, no transaction will be done yet
     if(dma_launch(&trans) != DMA_CONFIG_OK){
         PRINTF("Error: dma_launch\n");
@@ -265,7 +277,7 @@ int main() {
     PRINTF("Launched DMA\n\r");
 
     #if !TARGET_SIM
-    // Enable the timer interrupts to go to sleep between packets. 
+    // Enable the timer interrupts to go to sleep between packets.
     enable_timer_interrupt();
     // Wait for a while just for the lols
     timer_wait_us(1000000);
@@ -289,15 +301,15 @@ int main() {
             // The DMA will take care of taking the data from the SPI host to the dLC and then to memory
             // buffer_read_to[i] = spi_copy_byte(spi_device, i%4 );
             gpio_toggle(GPIO_LD5_G);
-            
-            // We will simulate a 20 Hz sampling rate by delaying each SPI data request. This is transparent to the 
+
+            // We will simulate a 20 Hz sampling rate by delaying each SPI data request. This is transparent to the
             // DMA, which is only waiting for data to be available at the SPI host Rx fifo.
             #if !TARGET_SIM
             timer_wait_us(50000);
             #endif
         }
     }
-    
+
     // Celebrate in a fairly lame way
     PRINTF("Requested data!\n\r");
     gpio_write(GPIO_LD5_G,  true);
@@ -307,21 +319,25 @@ int main() {
 /*############################################################
 ####### WAIT FOR THE DMA TO FINISH ########################*/
 
-    while( window_intr_flag < 10 ) {       
+    // This is an arbitrary number I chose from seeing more or less how many windows will be
+    // triggered during the recording of ECG that we have, considering the transactions finishing.
+    uint8_t windows_to_process = 7;
+
+    while( window_intr_flag + transactions_intr_flag < windows_to_process ) {
         CSR_CLEAR_BITS(CSR_REG_MSTATUS, 0x8);
-        if ( window_intr_flag < 10  ) {
+        if ( window_intr_flag + transactions_intr_flag < windows_to_process  ) {
                 wait_for_interrupt();
-            }
-            CSR_SET_BITS(CSR_REG_MSTATUS, 0x8);
+        }
+        CSR_SET_BITS(CSR_REG_MSTATUS, 0x8);
     }
-        
+
     // Celebrate in a fairly lame way
-    PRINTF("DMA done! Did %d windows\n\r", window_intr_flag);
+    PRINTF("DMA done! Did %d windows and %d transactions which finished\n\r", window_intr_flag, transactions_intr_flag);
     gpio_write(GPIO_LD5_G,  false);
-    gpio_write(GPIO_LD5_B,  true);    
+    gpio_write(GPIO_LD5_B,  true);
 
 /*############################################################
-####### CHECK THE RESULTS ###################################*/    
+####### CHECK THE RESULTS ###################################*/
 
     // Checking  the results
     PRINTF("\n\rRES\t| dLC\t| Golden");
@@ -330,7 +346,7 @@ int main() {
     {
         if(dlc_results[i] != lc_data_for_storage_data[i])
         {
-            printf("\n\rX %d\t| %d\t| %d", i, dlc_results[i], lc_data_for_storage_data[i]);
+            PRINTF("\n\rX %d\t| %d\t| %d", i, dlc_results[i], lc_data_for_storage_data[i]);
             errors++;
         }
     }
