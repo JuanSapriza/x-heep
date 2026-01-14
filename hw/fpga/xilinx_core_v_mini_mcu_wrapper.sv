@@ -18,9 +18,6 @@ module xilinx_core_v_mini_mcu_wrapper
 `elsif FPGA_AUP_ZU3
     inout logic clk_100mhz_n,
     inout logic clk_100mhz_p,
-`elsif FPGA_GENESYS2
-    inout logic clk_200mhz_n,
-    inout logic clk_200mhz_p,
 `else
     inout logic clk_i,
 `endif
@@ -122,12 +119,6 @@ module xilinx_core_v_mini_mcu_wrapper
   xilinx_clk_wizard_wrapper xilinx_clk_wizard_wrapper_i (
       .CLK_IN1_D_0_clk_n(clk_100mhz_n),
       .CLK_IN1_D_0_clk_p(clk_100mhz_p),
-      .clk_out1_0(clk_gen)
-  );
-`elsif FPGA_GENESYS2
-  xilinx_clk_wizard_wrapper xilinx_clk_wizard_wrapper_i (
-      .CLK_IN1_D_0_clk_n(clk_200mhz_n),
-      .CLK_IN1_D_0_clk_p(clk_200mhz_p),
       .clk_out1_0(clk_gen)
   );
 `elsif FPGA_NEXYS
