@@ -73,19 +73,6 @@ module testharness #(
   localparam EXT_DOMAINS_RND = core_v_mini_mcu_pkg::EXTERNAL_DOMAINS == 0 ? 1 : core_v_mini_mcu_pkg::EXTERNAL_DOMAINS;
   localparam NEXT_INT_RND = core_v_mini_mcu_pkg::NEXT_INT == 0 ? 1 : core_v_mini_mcu_pkg::NEXT_INT;
 
-  // CORE-V X-IF parameters
-  // ----------------------
-  // NOTE: CV32E20 does not supports reading from more than 2 registers so far
-  localparam int unsigned TB_X_NUM_RS    = (CpuType == cv32e20) ? cve2_pkg::X_NUM_RS : fpu_ss_pkg::X_NUM_RS;
-  localparam int unsigned TB_X_ID_WIDTH  = (CpuType == cv32e20) ? cve2_pkg::X_ID_WIDTH : fpu_ss_pkg::X_ID_WIDTH;
-  localparam int unsigned TB_X_MEM_WIDTH = (CpuType == cv32e20) ? 32 : fpu_ss_pkg::X_MEM_WIDTH;
-  localparam int unsigned TB_X_RFR_WIDTH = (CpuType == cv32e20) ? cve2_pkg::X_RFR_WIDTH : fpu_ss_pkg::X_RFR_WIDTH;
-  localparam int unsigned TB_X_RFW_WIDTH = (CpuType == cv32e20) ? cve2_pkg::X_RFW_WIDTH : fpu_ss_pkg::X_RFW_WIDTH;
-  localparam logic [31:0] TB_X_MISA      = (QUADRILATERO != 0) ? '0 : {
-    {26{1'b0}}, fpu_ss_pkg::C_RVF, 1'b0, fpu_ss_pkg::C_RVD, 3'h0
-  };
-  localparam logic [1:0] TB_X_ECS_XS = '0;
-
   // Internal signals
   // ----------------
   // Global pins
@@ -191,12 +178,12 @@ module testharness #(
 
   // eXtension Interface
   if_xif #(
-      .X_NUM_RS(TB_X_NUM_RS),
-      .X_ID_WIDTH(TB_X_ID_WIDTH),
-      .X_MEM_WIDTH(TB_X_MEM_WIDTH),
-      .X_RFR_WIDTH(TB_X_RFR_WIDTH),
-      .X_RFW_WIDTH(TB_X_RFW_WIDTH),
-      .X_MISA(TB_X_MISA)
+      .X_NUM_RS(fpu_ss_pkg::X_NUM_RS),
+      .X_ID_WIDTH(fpu_ss_pkg::X_ID_WIDTH),
+      .X_MEM_WIDTH(fpu_ss_pkg::X_MEM_WIDTH),
+      .X_RFR_WIDTH(fpu_ss_pkg::X_RFR_WIDTH),
+      .X_RFW_WIDTH(fpu_ss_pkg::X_RFW_WIDTH),
+      .X_MISA(fpu_ss_pkg::X_MISA)
   ) ext_if ();
 
   // External SPC interface signals
@@ -540,14 +527,12 @@ module testharness #(
           .dma_write_req_o(ext_master_req[testharness_pkg::EXT_MASTER1_IDX]),
           .dma_write_resp_i(ext_master_resp[testharness_pkg::EXT_MASTER1_IDX]),
           .hw_fifo_req_o(),
-          .external_hw2reg_i('0),
           .hw_fifo_resp_i(),
           .dma_addr_req_o(),
           .dma_addr_resp_i('0),
           .trigger_slot_i('0),
           .dma_done_intr_o(memcopy_intr),
           .dma_window_intr_o(),
-          .dma_ready_o(),
           .dma_done_o()
       );
 
@@ -684,13 +669,6 @@ module testharness #(
           .io3(spi_flash_sd_io[3])
       );
 
-      // FPU Subsystem
-      // -------------
-      // WARNING: CV32E20 currently only supports offloading two source operands to the coprocessor.
-      //          On the other hand, some instructions in the RISC-V "F" or "D" instructions use the
-      //          R4-type instruction format, with 3 source operands. One example is 'fmadd.s'. So
-      //          make sure not to use CV32E20 if you need a RV32F-compliant system. The FPU is
-      //          connected here just for testing purposes.
       if ((core_v_mini_mcu_pkg::CpuType == cv32e40x || core_v_mini_mcu_pkg::CpuType == cv32e40px || (FPU_SS_ZFINX && core_v_mini_mcu_pkg::CpuType == cv32e20)) && ${cpu.get_sv_str("cv_x_if") if cpu.is_defined("cv_x_if") else "0"} && (QUADRILATERO == 0)) begin: gen_fpu_ss_wrapper
         fpu_ss_wrapper #(
             .PULP_ZFINX(FPU_SS_ZFINX),
@@ -713,9 +691,6 @@ module testharness #(
             .xif_result_if(ext_if)
         );
       end
-
-      // Quadrilatero
-      // ------------
       if ((core_v_mini_mcu_pkg::CpuType == cv32e40x || core_v_mini_mcu_pkg::CpuType == cv32e40px || core_v_mini_mcu_pkg::CpuType == cv32e20) && ${cpu.get_sv_str("cv_x_if") if cpu.is_defined("cv_x_if") else "0"} && (QUADRILATERO != 0)) begin: gen_quadrilatero_wrapper
         quadrilatero_wrapper #(
             .MATRIX_FPU(0)

@@ -59,7 +59,41 @@ PYTHON_X_HEEP_CFG ?=
 XHEEP_CONFIG_CACHE ?= $(BUILD_DIR)/xheep_config_cache.pickle
 
 # MCU-Gen template files to generate
-MCU_GEN_TEMPLATES = $(shell find . \( -path './hw/vendor' -o -path './util' -o -path './test' \) -prune -o -name '*.tpl' -print)
+MCU_GEN_TEMPLATES = \
+	hw/core-v-mini-mcu/include/core_v_mini_mcu_pkg.sv.tpl \
+	hw/core-v-mini-mcu/core_v_mini_mcu.sv.tpl \
+	hw/core-v-mini-mcu/system_bus.sv.tpl \
+	hw/core-v-mini-mcu/system_xbar.sv.tpl \
+	hw/core-v-mini-mcu/memory_subsystem.sv.tpl \
+	hw/core-v-mini-mcu/ao_peripheral_subsystem.sv.tpl \
+	hw/core-v-mini-mcu/peripheral_subsystem.sv.tpl \
+	hw/core-v-mini-mcu/cpu_subsystem.sv.tpl \
+	hw/system/x_heep_system.sv.tpl \
+	hw/system/pad_ring.sv.tpl \
+	hw/system/pad_control/data/pad_control.hjson.tpl \
+	hw/system/pad_control/rtl/pad_control.sv.tpl \
+	hw/ip/soc_ctrl/data/soc_ctrl.hjson.tpl \
+	hw/ip/power_manager/rtl/power_manager.sv.tpl \
+	hw/ip/power_manager/data/power_manager.hjson.tpl \
+	hw/ip/pdm2pcm/data/pdm2pcm.hjson.tpl \
+	hw/ip/pdm2pcm/rtl/pdm2pcm.sv.tpl \
+	hw/ip/pdm2pcm/rtl/pdm_core.sv.tpl \
+	hw/ip/dma/data/dma.hjson.tpl \
+	hw/ip/dma/data/dma_conf.svh.tpl \
+	hw/fpga/sram_wrapper.sv.tpl \
+	hw/fpga/scripts/generate_sram.tcl.tpl \
+	tb/tb_util.svh.tpl \
+	tb/testharness.sv.tpl \
+	$(LINK_FOLDER)/link.ld.tpl \
+	$(LINK_FOLDER)/link_flash_load.ld.tpl \
+	$(LINK_FOLDER)/link_flash_exec.ld.tpl \
+	sw/device/lib/crt/crt0.S.tpl \
+	sw/device/lib/runtime/core_v_mini_mcu.h.tpl \
+	sw/device/lib/runtime/core_v_mini_mcu_memory.h.tpl \
+	sw/device/lib/drivers/power_manager/power_manager.h.tpl \
+	scripts/pnr/core-v-mini-mcu.upf.tpl \
+	scripts/pnr/core-v-mini-mcu.dc.upf.tpl \
+	util/profile/run_profile.sh.tpl
 
 # Compiler options are 'gcc' (default) and 'clang'
 COMPILER 		?= gcc
