@@ -540,7 +540,7 @@ def load_cfg_file(f: PurePath) -> XHeep:
         raise RuntimeError(f"unsupported file extension {f.suffix}")
 
 
-def load_pad_cfg(pad_cfg_path: PurePath):
+def load_pad_cfg(f: PurePath):
     """
     Load pad configuration a Python file and build the PadRing.
 
@@ -556,7 +556,24 @@ def load_pad_cfg(pad_cfg_path: PurePath):
     if pad_cfg_path.suffix != ".py":
         raise RuntimeError(f"unsupported file extension {pad_cfg_path.suffix}")
 
-    spec = importlib.util.spec_from_file_location("configs._config", pad_cfg_path)
-    mod = importlib.util.module_from_spec(spec)
-    spec.loader.exec_module(mod)
-    return mod.config()
+                if pad_group is None:
+                    raise ValueError(
+                        "PadGroup could not be created from configuration."
+                    )
+                pad_ring = PadRing(pad_group)
+                if pad_ring is None:
+                    raise ValueError("PadRing could not be created from configuration.")
+                return pad_ring
+            except ValueError:
+                raise SystemExit(sys.exc_info()[1])
+
+    elif f.suffix == ".py":
+        # The python script should have a function config() that takes no parameters and
+        # returns an instance of the PadRing type.
+        spec = importlib.util.spec_from_file_location("configs._config", f)
+        mod = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(mod)
+        return mod.config()
+
+    else:
+        raise RuntimeError(f"unsupported file extension {f.suffix}")
