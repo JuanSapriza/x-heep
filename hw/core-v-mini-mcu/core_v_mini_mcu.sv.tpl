@@ -27,16 +27,18 @@ module core_v_mini_mcu
     parameter EXT_HARTS_RND = EXT_HARTS == 0 ? 1 : EXT_HARTS
 ) (
 
-% for pin in xheep.get_padring().get_connected_pins():
+    input logic rst_ni,
+
+% for pin in xheep.get_padring().pin_list:
   % if pin.module == "core_v_mini_mcu":
-    % if isinstance(pin, (Input, Inout)):
-      input logic ${pin.rtl_name()}i,
+    % if pin.type in [PinType.DIGITAL_INPUT, PinType.DIGITAL_INOUT]:
+      input logic ${pin.rtl_name()}_i,
     % endif
-    % if isinstance(pin, (Output, Inout)):
-      output logic ${pin.rtl_name()}o,
+    % if pin.type in [PinType.DIGITAL_OUTPUT, PinType.DIGITAL_INOUT]:
+      output logic ${pin.rtl_name()}_o,
     % endif
-    % if isinstance(pin, Inout):
-      output logic ${pin.rtl_name()}oe_o,
+    % if pin.type in [PinType.DIGITAL_INOUT]:
+      output logic ${pin.rtl_name()}_oe_o,
     % endif
   % endif
 % endfor
