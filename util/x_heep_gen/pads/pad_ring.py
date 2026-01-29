@@ -38,17 +38,16 @@ class PadRing:
             (pin for pin in pin_list if hasattr(pin, "default")), None
         )
         self.attributes = attributes
-        self.build(mapping)
+        self.build(mapping, pin_list)
 
-    def build(self, mapping):
+    def build(self, mapping, pin_list):
         self.pad_list = []
         self.side_indexes = {Side.LEFT: 0, Side.BOTTOM: 0, Side.RIGHT: 0, Side.TOP: 0}
-        global_index = 0
+        global_index = 1
         for side in Side:
-            if side not in mapping:
-                continue
             pin_mapping_side = mapping[side]
             for x in pin_mapping_side:
+
                 if isinstance(x, Pad):
                     pad = x.copy()
                     if pad.global_index is None:
@@ -83,69 +82,6 @@ class PadRing:
             self.side_indexes[side] += 1
         if pad.orientation is None:
             pad.orientation = SIDE_DEFAULT_ROTATION[side]
-
-    def rename_duplicate_pads(self):
-        # Pass 1: Handle missing names immediately
-        for pad in self.pad_list:
-            if not hasattr(pad, "name") or pad.name is None:
-                pad.name = f"NC_{getattr(pad, 'global_index', 'unknown')}"
-
-        # Pass 2: Count frequencies of the now-populated names
-        counts = Counter(pad.name for pad in self.pad_list)
-
-        # Pass 3: Apply indexing only to duplicates
-        seen_track = {}
-        for pad in self.pad_list:
-            original_name = pad.name
-            if counts[original_name] > 1:
-                # Increment tracking for this specific name
-                seen_track[original_name] = seen_track.get(original_name, 0) + 1
-                # Apply the _x suffix
-                pad.name = f"{original_name}_{seen_track[original_name]}"
-
-    def get_connected_pins(self):
-        """
-        Returns the list of pins that are connected to pads in the pad ring. In the case of
-        multiplexed pads, returns all pins.
-        """
-        connected_pins = []
-        for pad in self.pad_list:
-            for pin in pad.pins:
-                if pin not in connected_pins:
-                    connected_pins.append(pin)
-        return connected_pins
-
-    def get_connected_main_pins(self):
-        """
-        Returns the list of pins that are connected to pads in the pad ring. In the case of
-        multiplexed pads, only the first (main) pin is returned.
-        """
-        connected_pins = []
-        for pad in self.pad_list:
-            if pad.pins and pad.pins[0] not in connected_pins:
-                connected_pins.append(pad.pins[0])
-        return connected_pins
-
-    def num_muxed_pads(self):
-        """
-        Returns the number of pads that are multiplexed (i.e., connected to more than one pin).
-        """
-        count = 0
-        for pad in self.pad_list:
-            if len(pad.pins) > 1:
-                count += 1
-        return count
-
-    def get_muxed_pad_select_width(self):
-        """
-        Return the number of bits needed to select between pins in multiplexed pads.
-        """
-        pad_muxed_list = [pad for pad in self.pad_list if len(pad.pins) > 1]
-        if not pad_muxed_list:
-            return 0
-        return max(
-            (len(muxed_pad.pins) - 1).bit_length() for muxed_pad in pad_muxed_list
-        )
 
     def space_side_by_pitch(self, side, space_from_corner_cell, pitch):
 
@@ -262,6 +198,25 @@ class PadRing:
                 )
                 pad.bp_space = space
                 last_bp = i + 1
+
+    def rename_duplicate_pads(self):
+        # Pass 1: Handle missing names immediately
+        for pad in self.pad_list:
+            if not hasattr(pad, "name") or pad.name is None:
+                pad.name = f"NC_{getattr(pad, 'global_index', 'unknown')}"
+
+        # Pass 2: Count frequencies of the now-populated names
+        counts = Counter(pad.name for pad in self.pad_list)
+
+        # Pass 3: Apply indexing only to duplicates
+        seen_track = {}
+        for pad in self.pad_list:
+            original_name = pad.name
+            if counts[original_name] > 1:
+                # Increment tracking for this specific name
+                seen_track[original_name] = seen_track.get(original_name, 0) + 1
+                # Apply the _x suffix
+                pad.name = f"{original_name}_{seen_track[original_name]}"
 
     def print_pad_frame(self):
         print("\n")

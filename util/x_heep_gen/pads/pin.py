@@ -2,7 +2,6 @@ from .cell import *
 from enum import Enum
 
 
-# ToDo_padspy: select better names for this enum
 class PinType(Enum):
     DIGITAL_INPUT = "input"
     DIGITAL_OUTPUT = "output"
@@ -12,8 +11,12 @@ class PinType(Enum):
     PHYSICAL = "supply"
 
 
+# ToDo_padspy: select better names for this enum
+
+DEFAULT_MODULE = "core_v_mini_mcu"
+
+
 class Pin:
-    DEFAULT_MODULE = "core_v_mini_mcu"
 
     user_domain = ""
     module = ""
@@ -21,107 +24,123 @@ class Pin:
     def __init__(
         self,
         name,
-        module=None,
         attributes={},
     ):
         self.name = name
-        self.module = module if module is not None else Pin.DEFAULT_MODULE
+        self.priority = 0
         self.attributes = attributes
 
     def rtl_name(self):
         """
-        Returns the RTL name of the pin including an underscore '_' as suffix. If the pin is active
-        low, the suffix will be '_n' instead.
+        Returns the RTL name of the pin, which, for example, may have a suffix if the attributes
+        specify that it is active low.
         """
 
-        if self.attributes.get("active") == "low":
+        if self.attributes.get("active") == False:
             return f"{self.name}_n"
-        return f"{self.name}_"
+        return self.name
 
 
 class PinDigital(Pin):
-    def __init__(self, name, module=None, attributes={}):
+    def __init__(self, name, attributes={}):
+        super().__init__(name, attributes)
+        self.properties = {}
+        self.sv_pad_cell_name = f"u_pad_cell_{self.type.value}/pad_{self.type.value}_i"
+
+
+class PinDigital(Pin):
+    def __init__(self, name, attributes={}):
         self.name = name
-        self.iocell = iocell_d.copy()
-        self.bondpad = bondpad_d.copy()
-        super().__init__(name, module, attributes=attributes)
+        self.iocell = Cell.iocell_d
+        self.bondpad = Cell.bondpad_d
+        self.sv_pad_cell_name = f"u_pad_cell_{self.type.value}/pad_{self.type.value}_i"
+        super().__init__(name, attributes)
 
 
 class Input(PinDigital):
-    def __init__(self, name, module=None, attributes={}):
-        super().__init__(name, module, attributes=attributes)
-        self.iocell.update(rtl_wrapper="u_pad_cell_input")
+    def __init__(self, name, attributes={}):
+        self.type = PinType.DIGITAL_INPUT
+        super().__init__(name, attributes)
 
 
 class Output(PinDigital):
-    def __init__(self, name, module=None, attributes={}):
-        super().__init__(name, module, attributes=attributes)
-        self.iocell.update(rtl_wrapper="u_pad_cell_output")
+    def __init__(self, name, attributes={}):
+        self.type = PinType.DIGITAL_OUTPUT
+        super().__init__(name, attributes)
+
 
 class Inout(PinDigital):
-    def __init__(self, name, module=None, attributes={}):
-        super().__init__(name, module, attributes=attributes)
-        self.iocell.update(rtl_wrapper="u_pad_cell_inout")
+    def __init__(self, name, attributes={}):
+        self.type = PinType.DIGITAL_INOUT
+        super().__init__(name, attributes)
 
 
 class PinSupply(Pin):
     def __init__(self, name, attributes={}):
         self.name = name
         self.properties = {}
-        super().__init__(name, attributes=attributes)
+        self.type = PinType.DIGITAL_SUPPLY
+        if not hasattr(self, "sv_pad_cell_name"):
+            self.sv_pad_cell_name = "u_pad_cell_supply/pad_supply_i"
+        super().__init__(name, attributes)
 
 
 class DVdd(PinSupply):
     def __init__(self, name, attributes={}):
-        self.bondpad = bondpad_d.copy()
-        self.iocell = iocell_dVdd.copy()
-        super().__init__(name, attributes=attributes)
+        self.bondpad = Cell.bondpad_d
+        self.iocell = Cell.iocell_dVdd
+        super().__init__(name, attributes)
 
 
 class DVddIO(PinSupply):
     def __init__(self, name, attributes={}):
-        self.bondpad = bondpad_d.copy()
-        self.iocell = iocell_ioVdd.copy()
-        super().__init__(name, attributes=attributes)
+        self.bondpad = Cell.bondpad_d
+        self.iocell = Cell.iocell_ioVdd
+        super().__init__(name, attributes)
 
 
 class DVddPOC(PinSupply):
     def __init__(self, name, attributes={}):
-        self.bondpad = bondpad_d.copy()
-        self.iocell = iocell_ioPoc.copy()
-        super().__init__(name, attributes=attributes)
+        self.bondpad = Cell.bondpad_d
+        self.iocell = Cell.iocell_ioPoc
+        super().__init__(name, attributes)
 
 
 class DVss(PinSupply):
     def __init__(self, name, attributes={}):
-        self.bondpad = bondpad_d.copy()
-        self.iocell = iocell_dVss.copy()
-        super().__init__(name, attributes=attributes)
+        self.bondpad = Cell.bondpad_d
+        self.iocell = Cell.iocell_dVss
+        super().__init__(name, attributes)
 
 
 class PinAnalog(Pin):
-    def __init__(self, name, module=None, attributes={}):
+    def __init__(self, name, attributes={}):
         self.name = name
         self.properties = {}
-        super().__init__(name, module, attributes=attributes)
+        self.type = PinType.ANALOG
+        self.driven_manually = True
+        super().__init__(name, attributes)
 
 
 class AVdd(PinAnalog):
     def __init__(self, name, attributes={}):
-        self.bondpad = bondpad_a.copy()
-        self.iocell = iocell_aVdd.copy()
-        super().__init__(name, attributes=attributes)
+        self.bondpad = Cell.bondpad_a
+        self.iocell = Cell.iocell_aVdd
+        self.sv_pad_cell_name = "u_pad_cell_analog_vdd"
+        super().__init__(name, attributes)
 
 
 class AVss(PinAnalog):
     def __init__(self, name, attributes={}):
-        self.bondpad = bondpad_a.copy()
-        self.iocell = iocell_aVss.copy()
-        super().__init__(name, attributes=attributes)
+        self.bondpad = Cell.bondpad_a
+        self.iocell = Cell.iocell_aVss
+        self.sv_pad_cell_name = "u_pad_cell_analog_vss"
+        super().__init__(name, attributes)
 
 
 class Asignal(PinAnalog):
-    def __init__(self, name, module=None, attributes={}):
-        self.bondpad = bondpad_a.copy()
-        self.iocell = iocell_a.copy()
-        super().__init__(name, module, attributes=attributes)
+    def __init__(self, name, attributes={}):
+        self.bondpad = Cell.bondpad_a
+        self.iocell = Cell.iocell_a
+        self.sv_pad_cell_name = f"u_pad_cell_analog"
+        super().__init__(name, attributes)

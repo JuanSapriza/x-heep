@@ -12,6 +12,7 @@ class Pad:
     name: str = ""
     iocell: Cell = None
     bondpad: Cell = None
+    type: PinType = None
     global_index: int = None
     side: Side = None
     side_index: float = None
@@ -54,22 +55,38 @@ class Pad:
                 reverse=True,
             )
 
-            # Make the pad inherit the properties and attributes of its main pin (the one with the highest priority)
+            # Make the pad inherit the properties and attributes of its main pain (the one with the highest priority)
             self.inherit_attributes()
+            # Decide the type of the pad based on the type of its pins
+            self.decide_type()
 
         print(
-            f"{self.global_index}: {[a.name for a in self.pins]} = {self.iocell.name}"
+            f"{self.global_index}: {[a.name for a in self.pins]} | {self.type} = {self.iocell.name}"
         )
-    
-    def is_muxed(self):
-        """
-        Returns True if the pad is multiplexed (i.e., has more than one pin assigned).
-        """
-        return len(self.pins) > 1
 
     def inherit_attributes(self):
         for key, value in vars(self.pins[0]).items():
             setattr(self, key, value)
+
+    def decide_type(self):
+        # ToDo_padspy: fix this
+        if self.pins and all(p.type == self.pins[0].type for p in self.pins):
+            self.type = self.pins[0].type
+        else:
+            self.type = PinType.DIGITAL_INOUT
+        if isinstance(self.pins[0], PinDigital):
+            self.sv_pad_cell_name = (
+                f"u_pad_cell_{self.type.value}/pad_{self.type.value}_i"
+            )
+
+        """
+        self.__class__ = type(self.pins[0])
+        ToDo_padspy FIXME
+        if len(self.pins) > 1:
+            self.__class__ = MultiplexedPad
+        else:
+            self.__class__ = type(self.pins[0])
+        """
 
     def copy(self):
         return copy.deepcopy(self)
@@ -82,6 +99,8 @@ class Physical(Pad):
         self.iocell = iocell
         self.bondpad = bondpad
         self.pins = []
+        self.type = PinType.PHYSICAL
+        self.sv_pad_cell_name = "u_pad_cell_supply/pad_supply_i"
         self.attributes = attributes
 
 
