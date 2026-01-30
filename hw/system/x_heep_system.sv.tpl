@@ -215,39 +215,24 @@ module x_heep_system
 analog_signal_pads = [ pad for pad in xheep.get_padring().pad_list if any(isinstance(pin, Asignal) for pin in pad.pins) ] 
 %>
   pad_ring pad_ring_i (
-    % for pad in xheep.get_padring().pad_list:
-<%
-has_input_pin = any(isinstance(pin, Input) for pin in pad.pins)
-has_output_pin = any(isinstance(pin, Output) for pin in pad.pins)
-has_inout_pin = any(isinstance(pin, Inout) for pin in pad.pins)
-
-if not (has_input_pin or has_output_pin or has_inout_pin): continue
-pin0_name = pad.pins[0].rtl_name()
-muxed_string = "_muxed" if pad.is_muxed() else ""
-%>\
-      % if has_inout_pin or (has_input_pin and has_output_pin):
-    .${pin0_name}i(${pin0_name}out_x${muxed_string}),
-    .${pin0_name}oe_i(${pin0_name}oe_x${muxed_string}),
-    .${pin0_name}o(${pin0_name}in_x${muxed_string}),
-    .${pin0_name}io(${pin0_name}io),
-      % elif has_input_pin:
-    .${pin0_name}o(${pin0_name}in_x${muxed_string}),
-    .${pin0_name}io(${pin0_name}i),
-      % elif has_output_pin:
-    .${pin0_name}i(${pin0_name}out_x${muxed_string}),
-    .${pin0_name}io(${pin0_name}o${muxed_string}),
+    % for pad in [pad for pad in xheep.get_padring().pad_list if pad.pins]:
+      <% pin = pad.pins[0] %>
+      <% muxed_string = "_muxed" if pad.is_muxed() else "" %>
+      % if isinstance(pin, Input):
+        .${pin.rtl_name()}_io(${pin.rtl_name()}_i),
+        .${pin.rtl_name()}_o(${pin.rtl_name()}_in_x${muxed_string}),
+      % endif
+      % if isinstance(pin, Output):
+        .${pin.rtl_name()}_io(${pin.rtl_name()}_o),
+        .${pin.rtl_name()}_i(${pin.rtl_name()}_out_x${muxed_string}),
+      % endif
+      % if isinstance(pin, Inout):
+        .${pin.rtl_name()}_io(${pin.rtl_name()}_io),
+        .${pin.rtl_name()}_o(${pin.rtl_name()}_in_x${muxed_string}),
+        .${pin.rtl_name()}_i(${pin.rtl_name()}_out_x${muxed_string}),
+        .${pin.rtl_name()}_oe_i(${pin.rtl_name()}_oe_x${muxed_string}),
       % endif
     % endfor
-
-    % if len(analog_signal_pads)>0:
-        
-        `ifdef SYNTHESIS
-        % for pad in analog_signal_pads:
-     .${pad.name.lower()}_io,
-        % endfor
-        `endif
-    %endif
-
     % if attribute_bits != None:
         .pad_attributes_i(pad_attributes)
     % else:
@@ -257,35 +242,34 @@ muxed_string = "_muxed" if pad.is_muxed() else ""
 
 % for pin in xheep.get_padring().pin_list:
   % if isinstance(pin, Input):
-    assign ${pin.rtl_name()}out_x = 1'b0;
-    assign ${pin.rtl_name()}oe_x = 1'b0;
+    assign ${pin.rtl_name()}_out_x = 1'b0;
+    assign ${pin.rtl_name()}_oe_x = 1'b0;
   % endif
   % if isinstance(pin, Output):
-    assign ${pin.rtl_name()}oe_x = 1'b1;
+    assign ${pin.rtl_name()}_oe_x = 1'b1;
   % endif
 % endfor
 
-// PAD MULTIPLEXERS
-% for pad in [pad for pad in xheep.get_padring().pad_list if pad.is_muxed() and any(isinstance(pin, PinDigital) for pin in pad.pins)]:
-<% pin0_name = pad.pins[0].rtl_name() %>\
+% for pad in [pad for pad in xheep.get_padring().pad_list if pad.is_muxed()]:
   always_comb
   begin
     % for pin in pad.pins:
-      ${pin.rtl_name()}in_x = 1'b0;
+      ${pin.rtl_name()}_in_x = 1'b0;
     % endfor
     unique case(pad_muxes[core_v_mini_mcu_pkg::PAD_${pad.name.upper()}])
       % for idx, pin in enumerate(pad.pins):
         ${idx}: begin
           <% pinidx_name = pin.rtl_name() %>
-          ${pin0_name}out_x_muxed = ${pinidx_name}out_x;
-          ${pin0_name}oe_x_muxed  = ${pinidx_name}oe_x;
-          ${pinidx_name}in_x        = ${pin0_name}in_x_muxed;
+          ${pinidx_name}_out_x_muxed = ${pinidx_name}_out_x;
+          ${pinidx_name}_oe_x_muxed  = ${pinidx_name}_oe_x;
+          ${pinidx_name}_in_x        = ${pinidx_name}_in_x_muxed;
         end
       % endfor
       default: begin
-        ${pin0_name}out_x_muxed = ${pin0_name}out_x;
-        ${pin0_name}oe_x_muxed  = ${pin0_name}oe_x;
-        ${pin0_name}in_x        = ${pin0_name}in_x_muxed;
+        <% pin0_name = pad.pins[0].rtl_name() %>
+        ${pin0_name}_out_x_muxed = ${pin0_name}_out_x;
+        ${pin0_name}_oe_x_muxed  = ${pin0_name}_oe_x;
+        ${pin0_name}_in_x        = ${pin0_name}_in_x_muxed;
       end
     endcase
   end
@@ -299,12 +283,12 @@ muxed_string = "_muxed" if pad.is_muxed() else ""
       .clk_i(clk_in_x),
       .rst_ni(rst_ngen),
       .reg_req_i(pad_req),
-      .reg_rsp_o(pad_resp)${"," if any_muxed_pads or attribute_bits != None else ""}
+      .reg_rsp_o(pad_resp)${"," if xheep.get_padring().num_muxed_pads() > 0 or attribute_bits != None else ""}
       % if attribute_bits != None:
-      .pad_attributes_o(pad_attributes)${"," if any_muxed_pads else ""}
+            .pad_attributes_o(pad_attributes)${"," if xheep.get_padring().num_muxed_pads() > 0 else ""}
       % endif
-      % if any_muxed_pads:
-      .pad_muxes_o(pad_muxes)
+      % if xheep.get_padring().num_muxed_pads() > 0:
+            .pad_muxes_o(pad_muxes)
       % endif
   );
 
