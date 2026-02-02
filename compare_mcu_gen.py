@@ -4,7 +4,6 @@ import shutil
 import sys
 import tempfile
 from typing import List
-import filecmp
 
 REPO_ROOT = pathlib.Path(__file__).resolve().parent
 PYTHON = sys.executable
@@ -72,18 +71,6 @@ def mcu_gen(repo_root: pathlib.Path, pads_cfg: pathlib.Path, outdir: pathlib.Pat
             shutil.copy2(gen, target)
 
 
-def list_diff_files(left: pathlib.Path, right: pathlib.Path) -> List[str]:
-    def walk(cmp: filecmp.dircmp, rel: pathlib.Path) -> List[str]:
-        diffs = []
-        for name in cmp.diff_files + cmp.left_only + cmp.right_only:
-            diffs.append(str(rel / name))
-        for subname, subcmp in cmp.subdirs.items():
-            diffs.extend(walk(subcmp, rel / subname))
-        return diffs
-
-    return walk(filecmp.dircmp(left, right), pathlib.Path("."))
-
-
 def main():
     original_ref = subprocess.check_output(
         ["git", "rev-parse", "--abbrev-ref", "HEAD"],
@@ -117,13 +104,10 @@ def main():
         )
 
         print("\n=== MCU-GEN DIFF ===")
-        diff_files = list_diff_files(out_main, out_curr)
-        if not diff_files:
-            print("No differences found.")
-        else:
-            print(f"Found {len(diff_files)} differing file(s):")
-            for path in diff_files:
-                print(f" - {path}")
+        run(
+            ["diff", "-ruN", str(out_main), str(out_curr)],
+            check=False,
+        )
 
         print("\nCleaning up worktree...")
         run(["git", "worktree", "remove", "--force", tmp])
