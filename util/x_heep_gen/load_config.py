@@ -42,9 +42,6 @@ from .peripherals.user_peripherals import (
     I2S,
     UART,
 )
-from .pads.pad_ring import PadRing
-from .pads.floorplan import FloorplanDimensions
-from .pads.dimension import Dimension
 
 
 def to_int(input) -> Union[int, None]:
@@ -543,7 +540,7 @@ def load_cfg_file(f: PurePath) -> XHeep:
         raise RuntimeError(f"unsupported file extension {f.suffix}")
 
 
-def load_pad_cfg(f: PurePath):
+def load_pad_cfg(pad_cfg_path: PurePath):
     """
     Load pad configuration a Python file and build the PadRing.
 
@@ -556,43 +553,10 @@ def load_pad_cfg(f: PurePath):
     if not isinstance(pad_cfg_path, PurePath):
         raise TypeError("parameter should be of type PurePath")
 
-    if f.suffix == ".hjson":
-        with open(f, "r") as file:
-            try:
-                srcfull = file.read()
-                pad_cfg = hjson.loads(srcfull, use_decimal=True)
-                pad_cfg = JsonRef.replace_refs(pad_cfg)
-                pad_ring = load_pad_cfg_hjson(pad_cfg)
-                if pad_ring is None:
-                    raise ValueError("PadRing could not be created from configuration.")
-                return pad_ring
-            except ValueError:
-                raise SystemExit(sys.exc_info()[1])
+    if pad_cfg_path.suffix != ".py":
+        raise RuntimeError(f"unsupported file extension {pad_cfg_path.suffix}")
 
-    elif f.suffix == ".py":
-        # The python script should have a function config() that takes no parameters and
-        # returns an instance of the PadRing type.
-        spec = importlib.util.spec_from_file_location("configs._config", f)
-        mod = importlib.util.module_from_spec(spec)
-        spec.loader.exec_module(mod)
-        return mod.config()
-
-    else:
-        raise RuntimeError(f"unsupported file extension {f.suffix}")
-
-
-def load_pad_cfg_hjson(pad_cfg: hjson.OrderedDict) -> PadRing:
-    """
-    Load pad configuration from HJSON dictionary and build PadRing.
-
-    :param hjson.OrderedDict pad_cfg: HJSON dictionary with pad configuration
-    :return: Built PadRing object ready for template generation
-    :raises TypeError: If pad_cfg is not an hjson.OrderedDict
-    """
-    if not isinstance(pad_cfg, hjson.OrderedDict):
-        raise TypeError("pad_cfg should be of type hjson.OrderedDict")
-
-    pad_ring = PadRing(
-        FloorplanDimensions(Dimension(0, 0), {}, {}, {}), {}, [], {}
-    )  # ToDo_padspy: Implement this properly
-    return pad_ring
+    spec = importlib.util.spec_from_file_location("configs._config", pad_cfg_path)
+    mod = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(mod)
+    return mod.config()
