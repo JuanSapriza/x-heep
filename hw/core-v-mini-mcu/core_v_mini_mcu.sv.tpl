@@ -27,9 +27,7 @@ module core_v_mini_mcu
     parameter EXT_HARTS_RND = EXT_HARTS == 0 ? 1 : EXT_HARTS
 ) (
 
-    input logic rst_ni,
-
-% for pin in xheep.get_padring().pin_list:
+% for pin in xheep.get_padring().get_connected_pins():
   % if pin.module == "core_v_mini_mcu":
     % if isinstance(pin, (Input, Inout)):
       input logic ${pin.rtl_name()}i,
